@@ -1,6 +1,8 @@
 import pygame
 import time
 
+from gameObject import GameObject
+
 class EventManager():
     def __init__(self):
         self.running = True
@@ -8,7 +10,9 @@ class EventManager():
         self.oldTime = time.time()
         self.deltaTime = 0
 
-    def checkEvents(self):
+        self.pos1 = None
+
+    def checkEvents(self, renderer):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -17,6 +21,21 @@ class EventManager():
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     quit()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mousePosition = pygame.mouse.get_pos()
+                mousePosition = pygame.Vector2(mousePosition[0], mousePosition[1])
+
+                if event.button == 1:
+                    if not renderer.hitboxPos1:
+                        renderer.hitboxPos1 = mousePosition
+                    else:
+                        pos = renderer.hitboxPos1 + renderer.camera.worldPosition
+                        worldMousePosition = mousePosition + renderer.camera.worldPosition
+                        hitbox = GameObject(pos.x, pos.y, worldMousePosition.x - pos.x, worldMousePosition.y - pos.y, type="hitbox")
+                        renderer.gameObjects.append(hitbox)
+                        renderer.hitboxPos1 = None
+
 
     def checkCameraMovement(self, camera, deltaTime):
         keys = pygame.key.get_pressed()
@@ -29,16 +48,3 @@ class EventManager():
             camera.worldPosition.x -= camera.velocity * deltaTime
         if keys[pygame.K_d]:
             camera.worldPosition.x += camera.velocity * deltaTime
-
-    def checkPlayerMovement(self, player, camera, deltaTime):
-        keys = pygame.key.get_pressed()
-
-        step = player.velocity * deltaTime
-        if keys[pygame.K_w] and player.worldPosition.y - step > 0:
-            player.worldPosition.y -= step
-        if keys[pygame.K_s] and player.worldPosition.y + step < camera.worldWidth - player.height:
-            player.worldPosition.y += step
-        if keys[pygame.K_a] and player.worldPosition.x - step > 0:
-            player.worldPosition.x -= step
-        if keys[pygame.K_d] and player.worldPosition.x + step < camera.worldHeight - player.width:
-            player.worldPosition.x += step
